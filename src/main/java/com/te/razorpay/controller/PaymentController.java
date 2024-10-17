@@ -8,9 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/payment")
@@ -23,24 +21,26 @@ public class PaymentController {
     private String razorpayKeySecret;
 
     @PostMapping("/createOrder")
-    public Map<String, String> createOrder(@RequestBody Map<String, Long> data) {
-        Map<String, String> response = new HashMap<>();
+    public ArrayList<String> createOrder(@RequestBody ArrayList<Long> data) {
+        ArrayList<String> response = new ArrayList<>();
 
         try {
             RazorpayClient razorpayClient = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
 
-            JSONObject orderRequest = new JSONObject();
-            orderRequest.put("amount", data.get("amount"));
-            orderRequest.put("currency", "INR");
-            orderRequest.put("receipt", "txn_" + System.currentTimeMillis());
+            JSONObject orderRequest;
+            Order order;
 
-            Order order = razorpayClient.orders.create(orderRequest);
-
-            response.put("orderId", order.get("id"));
-            response.put("status", "success");
+            for(Long item : data) {
+                orderRequest = new JSONObject();
+                orderRequest.put("amount", item);
+                orderRequest.put("currency", "INR");
+                orderRequest.put("receipt", "txn_" + System.currentTimeMillis());
+                order = razorpayClient.orders.create(orderRequest);
+                response.add(order.get("id"));
+            }
+            response.add("Success");
         } catch (Exception e) {
-            response.put("status", "failed");
-            response.put("message", e.getMessage());
+            response.add(e.getMessage());
         }
 
         return response;
